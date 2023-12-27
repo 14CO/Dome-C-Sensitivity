@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Implementation of 14CO profile models which can be used to compute the likelihood of a given dataset, given the model."""
 
+from abc import ABC
 import numpy as np
 from coprofile import COProfile
 
