@@ -71,14 +71,14 @@ Balco_mu_fast = Balco_mu_fast';
 % Loop over F*Omega factors allowed by Dyonisius et al.
 factors = readmatrix('factors_2sigma_hull.csv');
 
-% for ifac=1 : size(factors)
-for ifac=1 : 1
-    % factor = factors(ifac,:);
-    % negfac = factor(1);
-    % fstfac = factor(2);
+for ifac=1 : size(factors)
+% for ifac=1 : 1
+    factor = factors(ifac,:);
+    negfac = factor(1);
+    fstfac = factor(2);
 
-    negfac = 0.066;
-    fstfac = 0.072;
+    % negfac = 0.066;
+    % fstfac = 0.072;
 
     P_mu_neg_14CO = Balco_mu_neg.*negfac; %this applies the F*Omega tuning factor discussed in intro
     P_mu_fast_14CO = Balco_mu_fast.*fstfac; 

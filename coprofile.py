@@ -23,12 +23,11 @@ class COProfile:
         self.z, self.CO = z, CO
         if depth_avg == 10:
             dz = 10.
-            self.dCOrel = rel_uncertainty
         elif depth_avg == 20:
             dz = 20.
-            self.dCOrel = rel_uncertainty
         else:
             raise ValueError('depth_avg = {} m invalid; only 10 m and 20 m supported.'.format(depth_avg))
+        self.dCOrel = rel_uncertainty
           
         # Resample to block size required by the depth averageing parameter.
         blk = int(dz / np.diff(z)[0])
