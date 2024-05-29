@@ -118,10 +118,19 @@ for ifac=1 : size(factors)
         % Now calculate the time-evolving 14CO concentration:
         % CASE 1:  a step change in production rates halfway through run:
         % --------------------------------------
+        %P_change = P_changes(k); % magnitude (factor) of step change in production rate
+        %half_way = int16(no_t_pts/2);
+        %Pmn(half_way:no_t_pts,:) = P_change.*Pmn(half_way:no_t_pts,:);
+        %Pmf(half_way:no_t_pts,:) = P_change.*Pmf(half_way:no_t_pts,:);
+        %-----------------------------------------------------
+
+        % CASE 1A:  a step change in production rates halfway through run
+        % WITH fixed point at present day
+        % --------------------------------------
         P_change = P_changes(k); % magnitude (factor) of step change in production rate
         half_way = int16(no_t_pts/2);
-        Pmn(half_way:no_t_pts,:) = P_change.*Pmn(half_way:no_t_pts,:);
-        Pmf(half_way:no_t_pts,:) = P_change.*Pmf(half_way:no_t_pts,:);
+        Pmn(1:half_way,:) = Pmn(1:half_way,:)/P_change;
+        Pmf(1:half_way,:) = Pmf(1:half_way,:)/P_change;
         %-----------------------------------------------------
         
         %CASE 2: a gradual linear transition in production rates:

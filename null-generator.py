@@ -46,29 +46,32 @@ if __name__ == '__main__':
     step_models = ModelLikelihood('models/balco_14co_step_models_NEW.fits', depth_avg=args.depthavg)
     burst_models = ModelLikelihood('models/balco_14co_burst_models_NEW.fits', depth_avg=args.depthavg)
     
+    const_models.import_prior('14CO_f_all_ChiSq.csv')
+    linear_models.import_prior('14CO_f_all_ChiSq.csv')
+    step_models.import_prior('14CO_f_all_ChiSq.csv')
+    burst_models.import_prior('14CO_f_all_ChiSq.csv')
+    
     #dist = (const_models.fofactors['FOMUNEG'] - fmu_neg)**2 + (const_models.fofactors['FOMUFAST'] - fmu_fast)**2
     #j = dist.argmin()
     #data = const_models.models[j]
     
     data_mult = random.choices(const_models.models, weights=np.exp(const_models.logprior),k=args.number)
 
-    BF_lin_null = []
-    BF_step_null = []
-    BF_100yr_null = []
-    BF_1kyr_null = []
+    BF_lin_null = np.zeros(args.number)
+    BF_step_null = np.zeros(args.number)
+    BF_100yr_null = np.zeros(args.number)
 
     for i in tqdm(range(args.number)):
         #z_samp, CO_samp, dCO_samp = data.sample_z()
         z_samp, CO_samp, dCO_samp = data_mult[i].sample_z()
+        
+        const_like = const_models.likelihood(z_samp, CO_samp, dCO_samp)
 
-        B = const_models.likelihood(z_samp, CO_samp, dCO_samp) / linear_models.likelihood(z_samp, CO_samp, dCO_samp)
-        BF_lin_null.append(B)
+        BF_lin_null[i] = const_like / linear_models.likelihood(z_samp, CO_samp, dCO_samp)
 
-        B = const_models.likelihood(z_samp, CO_samp, dCO_samp) / step_models.likelihood(z_samp, CO_samp, dCO_samp)
-        BF_step_null.append(B)
+        BF_step_null[i] = const_like / step_models.likelihood(z_samp, CO_samp, dCO_samp)
 
-        B = const_models.likelihood(z_samp, CO_samp, dCO_samp) / burst_models.likelihood(z_samp, CO_samp, dCO_samp)
-        BF_100yr_null.append(B)
+        BF_100yr_null[i] = const_like / burst_models.likelihood(z_samp, CO_samp, dCO_samp)
 
     np.savez(f'models/bf_null_{args.depthavg:g}m_{100*args.reluncertainty:g}pct_{args.number:06d}_{args.id:02d}.npz',
              BF_lin=BF_lin_null,

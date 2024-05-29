@@ -87,7 +87,7 @@ for ifac=1 : size(factors)
     P_changes = linspace(0.5, 1.5, 101);
     for k=1 : length(P_changes)
 
-        outf = sprintf('linear_models/co14_linear_%.4f_%.4f_%.4f.csv', P_changes(k), negfac, fstfac);
+        outf = sprintf('linear_models_fix/co14_linear_%.4f_%.4f_%.4f.csv', P_changes(k), negfac, fstfac);
         fprintf('%3d %.4f %.4f %3d %.4f %s\n', ifac, negfac, fstfac, k, P_changes(k), outf);
 
         % Define the time array - needed for time-variable production rates
@@ -126,12 +126,24 @@ for ifac=1 : size(factors)
 
         %CASE 2: a gradual linear transition in production rates:
         %------------------------------------------
+        %P_change = P_changes(k);  %values above one mean production rates increase with time
+        %P_change_step = (P_change - 1)/double(no_t_pts - 1);
+
+        %for i=2 : no_t_pts  % i is serving as the counter for time
+        %    Pmn(i,:) = double(1+ P_change_step*double(i-1))*Pmn(i,:);
+        %    Pmf(i,:) = double(1+ P_change_step*double(i-1))*Pmf(i,:);
+        %end
+        %-------------------------------------------
+
+        %CASE 2A: a gradual linear transition in production rates
+        %WITH fixed point at present day:
+        %------------------------------------------
         P_change = P_changes(k);  %values above one mean production rates increase with time
         P_change_step = (P_change - 1)/double(no_t_pts - 1);
 
-        for i=2 : no_t_pts  % i is serving as the counter for time
-            Pmn(i,:) = double(1+ P_change_step*double(i-1))*Pmn(i,:);
-            Pmf(i,:) = double(1+ P_change_step*double(i-1))*Pmf(i,:);
+        for i=1 : no_t_pts-1  % i is serving as the counter for time
+            Pmn(i,:) = double(1+ P_change_step*double(i-no_t_pts))*Pmn(i,:);
+            Pmf(i,:) = double(1+ P_change_step*double(i-no_t_pts))*Pmf(i,:);
         end
         %-------------------------------------------
 

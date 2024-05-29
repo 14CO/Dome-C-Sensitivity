@@ -46,5 +46,13 @@ class COProfile:
         
     def sample_z(self):
         """Return a sampled realization of the profile."""
-        CO_samp = [np.random.normal(co, self.dCOrel*co) for co in self.CO_model]
+        #CO_samp = [np.random.normal(co, self.dCOrel*co) for co in self.CO_model]
+        CO_samp = np.random.normal(self.CO_model, self.dCOrel*self.CO_model)
+        return self.z_samp, CO_samp, self.dCOrel*self.CO_model
+    
+    def sample_z_mult(self, N=1): # multiple samples at once
+        COs = np.expand_dims(self.CO_model, axis=1)
+        dCOs = np.expand_dims(self.dCOrel*self.CO_model, axis=1)
+        
+        CO_samp = np.random.normal(COs, dCOs, size = (len(self.CO_model), N))
         return self.z_samp, CO_samp, self.dCOrel*self.CO_model

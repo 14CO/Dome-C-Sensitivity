@@ -8,6 +8,8 @@ from astropy.io import fits
 
 from coprofile import COProfile
 
+import pandas as pd
+
 class ModelLikelihood(ABC):
     """Model likelihood base class.
     """
@@ -77,6 +79,27 @@ class ModelLikelihood(ABC):
         self.dtheta = self.volume / ncells
         self.logprior = np.zeros(ncells) # log of uniform prior
         self.logprior -= np.log(np.sum(np.exp(self.logprior) * self.dtheta)) # Normalize prior
+        
+    def import_prior(self, file):
+        # reads chi^2 data from csv and converts it to a prior
+        
+        chiData = pd.read_csv(file) # chi squared fit data for parameters
+        f_neg = np.expand_dims(np.array(chiData['f_neg']),axis=1)
+        f_fast = np.expand_dims(np.array(chiData['fast']),axis=1)
+        Chi_sq = np.array(chiData['Chi_sq'])
+        
+        # parameters used in model
+        mod_neg = self.fofactors['FOMUNEG']
+        mod_fast = self.fofactors['FOMUFAST']
+
+        # find closest data points to values used in model
+        dist = (mod_neg-f_neg)**2 + (mod_fast-f_fast)**2
+        j = dist.argmin(axis=0)
+
+        chi2 = Chi_sq[j]
+
+        logprior = -chi2/2 # log likelihood = -1/2 chi^2
+        self.logprior = logprior - np.log(np.sum(np.exp(logprior) * self.dtheta)) # Normalize prior
     
     def likelihood(self, z_samp, CO_samp, dCO_samp):        
         """Compute likelihood of a given realized 14CO profile given this model.
@@ -110,6 +133,46 @@ class ModelLikelihood(ABC):
         #Pr = np.sum(np.exp(loglike + self.logprior) * self.dtheta)
         Pr = np.average(np.exp(loglike + self.logprior)) #ASSUMING VOLUME = 1; dtheta = 1/N
         
+        return Pr
+    
+    def likelihood_mult(self, CO_samps, dCO_samp): #multiple likelihood calculations at once
+        
+        """Compute likelihood of a given realized 14CO profile given this model.
+
+        Parameters
+        ----------
+        CO_samps: array; axis0 = depth; axis1 = iterations
+            Realization of a 14CO profile data set.
+        dCO_samps: array; axis0 = depth
+            Statistical uncertainties in realization of a 14CO profile.
+
+        Returns
+        -------
+        Pr : array
+            Likelihood of observing a given realized 14CO profile given this
+            model, marginalizing over allowed model parameters.
+        """
+        
+        N = np.shape(CO_samps)[0]
+        
+        # self.CO_mods: axis0 = parameter space; axis1 = depth
+        # self.logprior: axis0 = parameter space
+        
+        # axis0 = parameter space; axis1 = depth; axis2 = iterations
+        CO_th = np.expand_dims(self.CO_mods, axis=2)
+        CO_exp = np.expand_dims(CO_samps, axis=0)
+        dCO = np.expand_dims(dCO_samp, axis=(0,2))
+        
+        # sum over axis1 (depth)
+        loglike = -0.5*np.sum(((CO_th - CO_exp)/dCO)**2, axis=1) - 0.5*N*np.log(2*np.pi) - np.sum(np.log(dCO), axis=1)
+        
+        # axis0 = parameter space; axis1 = iterations
+        logprior = np.expand_dims(self.logprior, axis=1)
+        
+        # sum over axis0 (parameter space)
+        Pr = np.average(np.exp(loglike + logprior), axis=0)
+        
+        # axis0 = iterations
         return Pr
     
 # I generalized ModelLikelihood, so we don't need these subclasses anymore
