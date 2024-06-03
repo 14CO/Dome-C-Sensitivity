@@ -87,7 +87,7 @@ for ifac=1 : size(factors)
     P_changes = linspace(0.5, 1.5, 101);
     for k=1 : length(P_changes)
     
-        outf = sprintf('step_models/co14_step_%.4f_%.4f_%.4f.csv', P_changes(k), negfac, fstfac);
+        outf = sprintf('step_models_fix/co14_step_%.4f_%.4f_%.4f.csv', P_changes(k), negfac, fstfac);
         fprintf('%3d %.4f %.4f %3d %.4f %s\n', ifac, negfac, fstfac, k, P_changes(k), outf);
     
         % Define the time array - needed for time-variable production rates

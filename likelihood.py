@@ -131,7 +131,7 @@ class ModelLikelihood(ABC):
             
         loglike = -0.5*np.sum(((self.CO_mods - CO_samp) / dCO_samp)**2, axis=1) - 0.5*N*np.log(2*np.pi) - np.sum(np.log(dCO_samp))
         #Pr = np.sum(np.exp(loglike + self.logprior) * self.dtheta)
-        Pr = np.average(np.exp(loglike + self.logprior)) #ASSUMING VOLUME = 1; dtheta = 1/N
+        Pr = np.mean(np.exp(loglike + self.logprior)) #ASSUMING VOLUME = 1; dtheta = 1/N
         
         return Pr
     
