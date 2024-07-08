@@ -27,8 +27,6 @@ from argparse import ArgumentParser
 
 import random
 
-fmu_neg, fmu_fast = 0.068, 0.076
-
 if __name__ == '__main__':
     p = ArgumentParser(description='BF null distribition generator')
     p.add_argument('-d', '--depthavg', type=float, default=20.,
@@ -37,88 +35,71 @@ if __name__ == '__main__':
                    help='Depth average of CO profile, in m.')
     p.add_argument('-n', '--number', type=int, default=5000000,
                    help='Number of trials to generate')
-    p.add_argument('-f', '--fixed', type=bool, default=False,
-                   help='Number of trials to generate')
-    p.add_argument('-s', '--sample', type=bool, default=False,
-                   help='Number of trials to generate')
-    p.add_argument('-p', '--priors', type=bool, default=False,
-                   help='Number of trials to generate')
-    p.add_argument('-fo', '--fofactors', type=bool, default=False,
-                   help='Number of trials to generate')
-    p.add_argument('-nl', '--null', type=bool, default=False,
-                   help='Number of trials to generate')
+    p.add_argument('-neg', '--fmu_neg', type=int, default=0.066,
+                   help='')
+    p.add_argument('-fast', '--fmu_fast', type=int, default=0.072,
+                   help='')
+    p.add_argument('-f', '--fixed', type=bool, default=None,
+                   help='')
+    p.add_argument('-fo', '--fofactors', type=bool, default=None,
+                   help='')
     p.add_argument('-i', '--id', type=int, default=1,
                    help='Simulation number')
     args = p.parse_args()
     
     print(args)
-
-    fixed = 'pres' if args.fixed else 'past'
-    sample = 'mult' if args.sample else 'one'
-    priors = 'non-unif' if args.priors else 'unif'
-    f_factors = 'all' if args.fofactors else 'const'
-    null = 'null-out' if args.null else 'null-in'
-    print(fixed, sample, priors, f_factors, null)
     
-    print('Loading model data...')
+    fmu_neg, fmu_fast = args.fmu_neg, args.fmu_fast
 
-    const_models = ModelLikelihood('FITS_models/balco_14co_const_models.fits', depth_avg=args.depthavg)
-    linear_models = ModelLikelihood('FITS_models/balco_14co_linear_models_{}_{}_{}.fits'.format(fixed, f_factors, null), 
-                                    depth_avg=args.depthavg)
-    step_models = ModelLikelihood('FITS_models/balco_14co_step_models_{}_{}_{}.fits'.format(fixed, f_factors, null), 
-                                  depth_avg=args.depthavg)
-    burst_models = ModelLikelihood('FITS_models/balco_14co_burst_models_{}.fits'.format(f_factors), depth_avg=args.depthavg)
-    
-    if args.priors:
-        print('Generating priors...')
-
-        const_models.import_prior('14CO_f_all_ChiSq.csv')
-        linear_models.import_prior('14CO_f_all_ChiSq.csv')
-        step_models.import_prior('14CO_f_all_ChiSq.csv')
-        burst_models.import_prior('14CO_f_all_ChiSq.csv')
-    
-    print('Calculating Bayes factors')
-    
-    dist = (const_models.fofactors['FOMUNEG'] - fmu_neg)**2 + (const_models.fofactors['FOMUFAST'] - fmu_fast)**2
-    j = dist.argmin()
-    data = const_models.models[j]
-    
-    data_mult = random.choices(const_models.models, weights=np.exp(const_models.logprior),k=args.number)
-
-    BF_lin_null = np.zeros(args.number)
-    BF_step_null = np.zeros(args.number)
-    BF_100yr_null = np.zeros(args.number)
-    
-    if args.sample:
-        data_mult = random.choices(const_models.models, weights=np.exp(const_models.logprior),k=args.number)
-        
-        for i in tqdm(range(args.number)):
-            z_samp, CO_samp, dCO_samp = data_mult[i].sample_z()
-
-            const_like = const_models.likelihood(z_samp, CO_samp, dCO_samp)
-
-            BF_lin_null[i] = const_like / linear_models.likelihood(z_samp, CO_samp, dCO_samp)
-
-            BF_step_null[i] = const_like / step_models.likelihood(z_samp, CO_samp, dCO_samp)
-
-            BF_100yr_null[i] = const_like / burst_models.likelihood(z_samp, CO_samp, dCO_samp)
-            
+    if args.fixed == None:
+        fix = ['past', 'pres']
     else:
-        dist = (const_models.fofactors['FOMUNEG'] - fmu_neg)**2 + (const_models.fofactors['FOMUFAST'] - fmu_fast)**2
-        j = dist.argmin()
-        data = const_models.models[j]
+        fix = ['pres'] if args.fixed else ['past']
+    if args.fofactors == None:
+        factors = ['const', 'all']
+    else:
+        factors = ['all'] if args.fofactors else ['const']
+    
+    for fixed in fix:
+        for f_factors in factors:
+            print(fixed, f_factors)
 
-        for i in tqdm(range(args.number)):
-            z_samp, CO_samp, dCO_samp = data.sample_z()
+            print('Loading model data...')
 
-            const_like = const_models.likelihood(z_samp, CO_samp, dCO_samp)
+            const_models = ModelLikelihood('FITS_models/balco_14co_const_models.fits', depth_avg=args.depthavg)
+            linear_models = ModelLikelihood('FITS_models/balco_14co_linear_models_{}_{}.fits'.format(fixed, f_factors), 
+                                            depth_avg=args.depthavg)
+            step_models = ModelLikelihood('FITS_models/balco_14co_step_models_{}_{}.fits'.format(fixed, f_factors), 
+                                          depth_avg=args.depthavg)
+            burst_models = ModelLikelihood('FITS_models/balco_14co_burst_models_{}.fits'.format(f_factors), depth_avg=args.depthavg)
 
-            BF_lin_null[i] = const_like / linear_models.likelihood(z_samp, CO_samp, dCO_samp)
+            print('Calculating Bayes factors')
 
-            BF_step_null[i] = const_like / step_models.likelihood(z_samp, CO_samp, dCO_samp)
+            dist = (const_models.fofactors['FOMUNEG'] - fmu_neg)**2 + (const_models.fofactors['FOMUFAST'] - fmu_fast)**2
+            j = dist.argmin()
+            data = const_models.models[j]
 
-            BF_100yr_null[i] = const_like / burst_models.likelihood(z_samp, CO_samp, dCO_samp)
-    np.savez(f'FITS_models/bf_null_{args.depthavg:g}m_{100*args.reluncertainty:g}pct_{args.number:06d}_{fixed}_{sample}_{priors}_{f_factors}_{null}_{args.id:02d}.npz',
-             BF_lin=BF_lin_null,
-             BF_step=BF_step_null,
-             BF_100yr=BF_100yr_null)
+            data_mult = random.choices(const_models.models, weights=np.exp(const_models.logprior),k=args.number)
+
+            BF_lin_null = np.zeros(args.number)
+            BF_step_null = np.zeros(args.number)
+            BF_100yr_null = np.zeros(args.number)
+
+            for i in tqdm(range(args.number)):
+                z_samp, CO_samp, dCO_samp = data.sample_z()
+
+                const_like = const_models.likelihood(z_samp, CO_samp, dCO_samp)
+
+                BF_lin_null[i] = const_like / linear_models.likelihood(z_samp, CO_samp, dCO_samp)
+
+                BF_step_null[i] = const_like / step_models.likelihood(z_samp, CO_samp, dCO_samp)
+
+                BF_100yr_null[i] = const_like / burst_models.likelihood(z_samp, CO_samp, dCO_samp)
+                
+                file = f'FITS_models/bf_null_{args.depthavg:g}m_{100*args.reluncertainty:g}pct_{args.number:06d}_{fmu_neg:.3f}_{fmu_fast:.3f}_{fixed}_{f_factors}_{args.id:02d}.npz'
+            np.savez(file,
+                     BF_lin=BF_lin_null,
+                     BF_step=BF_step_null,
+                     BF_100yr=BF_100yr_null)
+            print('Saved to: '+file)
+            print()
