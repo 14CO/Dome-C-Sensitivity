@@ -66,12 +66,12 @@ if __name__ == '__main__':
 
             print('Loading model data...')
 
-            const_models = ModelLikelihood('FITS_models/balco_14co_const_models.fits', depth_avg=args.depthavg)
-            linear_models = ModelLikelihood('FITS_models/balco_14co_linear_models_{}_{}.fits'.format(fixed, f_factors), 
+            const_models = ModelLikelihood('models/balco_14co_const_models.fits', depth_avg=args.depthavg)
+            linear_models = ModelLikelihood('models/balco_14co_linear_models_{}_{}.fits'.format(fixed, f_factors), 
                                             depth_avg=args.depthavg)
-            step_models = ModelLikelihood('FITS_models/balco_14co_step_models_{}_{}.fits'.format(fixed, f_factors), 
+            step_models = ModelLikelihood('models/balco_14co_step_models_{}_{}.fits'.format(fixed, f_factors), 
                                           depth_avg=args.depthavg)
-            burst_models = ModelLikelihood('FITS_models/balco_14co_burst_models_{}.fits'.format(f_factors), depth_avg=args.depthavg)
+            burst_models = ModelLikelihood('models/balco_14co_burst_models_{}.fits'.format(f_factors), depth_avg=args.depthavg)
 
             print('Calculating Bayes factors')
 
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
                 BF_100yr_null[i] = const_like / burst_models.likelihood(z_samp, CO_samp, dCO_samp)
                 
-                file = f'FITS_models/bf_null_{args.depthavg:g}m_{100*args.reluncertainty:g}pct_{args.number:06d}_{fmu_neg:.3f}_{fmu_fast:.3f}_{fixed}_{f_factors}_{args.id:02d}.npz'
+                file = f'models/bf_null_{args.depthavg:g}m_{100*args.reluncertainty:g}pct_{args.number:06d}_{fmu_neg:.3f}_{fmu_fast:.3f}_{fixed}_{f_factors}_{args.id:02d}.npz'
             np.savez(file,
                      BF_lin=BF_lin_null,
                      BF_step=BF_step_null,
