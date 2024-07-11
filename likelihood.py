@@ -34,21 +34,21 @@ class ModelLikelihood(ABC):
         Internal Values
         ---------------
         self.models : array ( axis0: parameter space ) of COProfiles
-            
+            COProfiles of simulated data for different sets of parameters
         self.CO_mods : array ( axis0: parameter space, axis1: depth )
-            
+            14CO densities collected into a single array
         self.amplitudes : columns ( columns: 1, axis0: parameter space )
-            
+            Amplitude parameters
         self.fofactors : columns ( columns: 2, axis0: parameter space )
-            
+            14CO baseline production rates
         self.parameters : array ( axis0: parameter space ; axis1: parameter type )
-            
+            All parameters
         self.volume : float
-            
+            total volume in parameter space
         self.dtheta : float
-            
+            unit volume in parameter space
         self.logprior : array ( axis0: parameter space )
-            
+            log of Bayesian prior on parameters
         """
         hdus = fits.open(model_fits)
 

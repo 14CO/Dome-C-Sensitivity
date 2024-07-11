@@ -6,7 +6,7 @@ import numpy as np
 from astropy.io import fits
 
 class COGenerator:
-    """Generates CO Profiles from time-variance of muon reactions"""
+    """Generates CO Profiles from time-variance of production rates"""
     
     def __init__(self, mu_neg_file, mu_fast_file):
         """Initialize CO Profile Generator
@@ -93,14 +93,27 @@ class COProfile:
         
         Parameters
         ----------
-        z : ndarray
+        z : ndarray ( axis0 : depth )
             True or ice-equivalent depth array [m].
-        CO : ndarray
+        CO : ndarray ( axis
             14CO concentration profile [molecules/g].
         depth_avg : int or float
             Depth averaging parameter in meters (force use of 10 or 20 m only).
         rel_uncertainty: float
             Relative fractional uncertainty in concentration measurement.
+            
+        Internal Values
+        ----------
+        self.z : ndarray ( axis0 : depth )
+            True or ice-equivalent depth array [m]
+        self.CO : ndarray ( axis0 : depth )
+            14CO concentration profile [molecules/g]
+        self.dCOrel : float
+            Relative fractional uncertainty in concentration measurement
+        self.z_samp : ndarray ( axis0 : sample depth )
+            z averaged over depth_avg step size [m]
+        self.CO_model : ndarray ( axis0 : sample depth )
+            CO averaged over depth_avg step size [molecules/g]
         """
         self.z, self.CO = z, CO
         if depth_avg == 10:
