@@ -8,6 +8,7 @@
 
 ### Minor Updates
 
+* Factorize GCR calculation and plotting into two notebooks ([PR #2](https://github.com/14CO/Dome-C-Sensitivity/pull/2)).
 * Added option to fix changes to the flux in the present or the past ([PR #2](https://github.com/14CO/Dome-C-Sensitivity/pull/2)).
 * Reworked the calculation to enable parallel processing of many profile realizations ([PR #2](https://github.com/14CO/Dome-C-Sensitivity/pull/2)).
 
