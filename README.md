@@ -3,7 +3,7 @@ Sensitivity to changes in the GCR flux using carbon-14 profiles at Dome C, Antar
 
 ## Setup Steps
 1. Create Folders
-FITS_models
+models
 matlab/burst_models_past
 matlab/const_models_2sigma_hull
 matlab/delta_fast_models
@@ -29,3 +29,7 @@ Run csv-to-FITS.ipynb
 
 4. Calculate Null Model Bayes Factors
 Run null-generator.py
+
+## iPython Notebooks
+gcr-sensitivity : main sensitivity calculation
+graph-maker : produces graphs illustrating each step of the calculation process

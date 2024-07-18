@@ -154,7 +154,7 @@ class ModelLikelihood(ABC):
     
     def likelihood_mult(self, CO_samps, dCO_samp): #multiple likelihood calculations at once
         
-        """Compute likelihood of a given realized 14CO profile given this model.
+        """Compute likelihoods of multiple 14CO profiles given this model.
 
         Parameters
         ----------
