@@ -68,98 +68,107 @@ lambda = 1.21e-4; %14C decay constant
 Balco_mu_neg = Balco_mu_neg';
 Balco_mu_fast = Balco_mu_fast';
 
-ifac = 1;
-negfac = 0.066;
-fstfac = 0.072;
+% Loop over F*Omega factors allowed by Dyonisius et al.
+factors = readmatrix('factors_2sigma_hull.csv');
 
-P_mu_neg_14CO = Balco_mu_neg.*negfac; %this applies the F*Omega tuning factor discussed in intro
-P_mu_fast_14CO = Balco_mu_fast.*fstfac;    
-  
-% Loop over linear change values.
-P_changes = linspace(1.1, 10.0, 90);
-for k=1 : length(P_changes)
+for ifac=1 : size(factors)
+% for ifac=1 : 1
+    factor = factors(ifac,:);
+    negfac = factor(1);
+    fstfac = factor(2);
 
-    outf = sprintf('burst_models/co14_burst_%.4f_%.4f_%.4f.csv', P_changes(k), negfac, fstfac);
-    fprintf('%3d %.4f %.4f %3d %.4f %s\n', ifac, negfac, fstfac, k, P_changes(k), outf);
+    % negfac = 0.066;
+    % fstfac = 0.072;
 
-    % Define the time array - needed for time-variable production rates
-    t_step = 1.0; %years. Note: I am not sure that the current version would work properly if this is not 1; would need to look into it
-    duration = ages(end_index) - ages(start_index); % duration of model run in years
-    no_t_pts = int16(duration); % convert to integer
-    t = zeros(1,no_t_pts);
+    P_mu_neg_14CO = Balco_mu_neg.*negfac; %this applies the F*Omega tuning factor discussed in intro
+    P_mu_fast_14CO = Balco_mu_fast.*fstfac;    
+      
+    % Loop over linear change values.
+    P_changes = linspace(1.1, 10.0, 90);
+    for k=1 : length(P_changes)
     
-    % Define the results array
-    no_depths = length(ice_z);  % for an annual age scale this will be the same as number of time points
-    C14_CO = zeros(1,no_depths);  % this will be in molecules/g
-    C14_CO_temp = zeros(1,no_depths);
+        outf = sprintf('burst_models_past/co14_burst_%.4f_%.4f_%.4f.csv', P_changes(k), negfac, fstfac);
+        fprintf('%3d %.4f %.4f %3d %.4f %s\n', ifac, negfac, fstfac, k, P_changes(k), outf);
     
-    % Production rate matrices (in time and depth):
-    Pmn = ones(no_t_pts, no_depths); %first index is the time dimension, 2nd index is the depth dimension
-    Pmf = ones(no_t_pts, no_depths);
-    
-    %Assign the 14CO value to the top box of this model:
-    C14_CO(1) = 0;
-    
-    % Assign constant production rates:
-    for i=1 : no_depths
-        Pmn(:,i) = P_mu_neg_14CO(i);
-        Pmf(:,i) = P_mu_fast_14CO(i);
-    end
-    
-    
-    % Now calculate the time-evolving 14CO concentration:
-    % CASE 1:  a step change in production rates halfway through run:
-    % --------------------------------------
-    % P_change = 1.0; % magnitude (factor) of step change in production rate
-    % half_way = int16(no_t_pts/2);
-    % Pmn(half_way:no_t_pts,:) = P_change.*Pmn(half_way:no_t_pts,:);
-    % Pmf(half_way:no_t_pts,:) = P_change.*Pmf(half_way:no_t_pts,:);
-    %-----------------------------------------------------
-    
-    %CASE 2: a gradual linear transition in production rates:
-    %------------------------------------------
-    % P_change = P_changes(k);  %values above one mean production rates increase with time
-    % P_change_step = (P_change - 1)/double(no_t_pts - 1);
-    % 
-    % for i=2 : no_t_pts  % i is serving as the counter for time
-    %     Pmn(i,:) = double(1+ P_change_step*double(i-1))*Pmn(i,:);
-    %     Pmf(i,:) = double(1+ P_change_step*double(i-1))*Pmf(i,:);
-    % end
-    %-------------------------------------------
-    
-    % CASE 3: A transient spike in production rates:
-    %------------------------------------------
-    P_change = P_changes(k); % magnitude (factor) of transient change in production rate
-    spike_start = 3000; %timestep at which the production rate spike begins
-    spike_dur = 100; %number of time steps for which production rate spike persists
-    spike_end = spike_start + spike_dur;
-    Pmn(spike_start:spike_end,:) = P_change*Pmn(spike_start:spike_end,:);
-    Pmf(spike_start:spike_end,:) = P_change*Pmf(spike_start:spike_end,:);
-    %-------------------------------------------
-    
-    Pmf_top = Pmf(:,1); % this is a diagnostic to ensure production rate really changes with time
-    
-    % Now calculate 14CO:
-    for i=1 : no_t_pts % i is serving as the counter for time 
-        delta_C14 = (Pmn(i,:) + Pmf(i,:) - lambda*C14_CO)*t_step; %14C change at every depth level
-        for j=2 : no_depths % j is serving as the counter for depth
-            C14_CO_temp(j) = C14_CO(j-1) + delta_C14(j-1);  %update the 14CO concentration in each box and shift boxes down
+        % Define the time array - needed for time-variable production rates
+        t_step = 1.0; %years. Note: I am not sure that the current version would work properly if this is not 1; would need to look into it
+        duration = ages(end_index) - ages(start_index); % duration of model run in years
+        no_t_pts = int16(duration); % convert to integer
+        t = zeros(1,no_t_pts);
+        
+        % Define the results array
+        no_depths = length(ice_z);  % for an annual age scale this will be the same as number of time points
+        C14_CO = zeros(1,no_depths);  % this will be in molecules/g
+        C14_CO_temp = zeros(1,no_depths);
+        
+        % Production rate matrices (in time and depth):
+        Pmn = ones(no_t_pts, no_depths); %first index is the time dimension, 2nd index is the depth dimension
+        Pmf = ones(no_t_pts, no_depths);
+        
+        %Assign the 14CO value to the top box of this model:
+        C14_CO(1) = 0;
+        
+        % Assign constant production rates:
+        for i=1 : no_depths
+            Pmn(:,i) = P_mu_neg_14CO(i);
+            Pmf(:,i) = P_mu_fast_14CO(i);
         end
-        C14_CO = C14_CO_temp;
+        
+        
+        % Now calculate the time-evolving 14CO concentration:
+        % CASE 1:  a step change in production rates halfway through run:
+        % --------------------------------------
+        % P_change = 1.0; % magnitude (factor) of step change in production rate
+        % half_way = int16(no_t_pts/2);
+        % Pmn(half_way:no_t_pts,:) = P_change.*Pmn(half_way:no_t_pts,:);
+        % Pmf(half_way:no_t_pts,:) = P_change.*Pmf(half_way:no_t_pts,:);
+        %-----------------------------------------------------
+        
+        %CASE 2: a gradual linear transition in production rates:
+        %------------------------------------------
+        % P_change = P_changes(k);  %values above one mean production rates increase with time
+        % P_change_step = (P_change - 1)/double(no_t_pts - 1);
+        % 
+        % for i=2 : no_t_pts  % i is serving as the counter for time
+        %     Pmn(i,:) = double(1+ P_change_step*double(i-1))*Pmn(i,:);
+        %     Pmf(i,:) = double(1+ P_change_step*double(i-1))*Pmf(i,:);
+        % end
+        %-------------------------------------------
+        
+        % CASE 3: A transient spike in production rates:
+        %------------------------------------------
+        P_change = P_changes(k); % magnitude (factor) of transient change in production rate
+        spike_start = 3000; %timestep at which the production rate spike begins
+        spike_dur = 100; %number of time steps for which production rate spike persists
+        spike_end = spike_start + spike_dur;
+        Pmn(spike_start:spike_end,:) = P_change*Pmn(spike_start:spike_end,:);
+        Pmf(spike_start:spike_end,:) = P_change*Pmf(spike_start:spike_end,:);
+        %-------------------------------------------
+        
+        Pmf_top = Pmf(:,1); % this is a diagnostic to ensure production rate really changes with time
+        
+        % Now calculate 14CO:
+        for i=1 : no_t_pts % i is serving as the counter for time 
+            delta_C14 = (Pmn(i,:) + Pmf(i,:) - lambda*C14_CO)*t_step; %14C change at every depth level
+            for j=2 : no_depths % j is serving as the counter for depth
+                C14_CO_temp(j) = C14_CO(j-1) + delta_C14(j-1);  %update the 14CO concentration in each box and shift boxes down
+            end
+            C14_CO = C14_CO_temp;
+        end
+        
+        %Avg14CO = mean(C14_CO)
+        
+        % convert back to real depth
+        real_z = interp1(ice_eq_z,z,ice_z);
+        tab = array2table([real_z, transpose(C14_CO)]);
+        tab.Properties.VariableNames(1:2) = {'z', 'co14_co'};
+        writetable(tab, outf);
+    
+        %figure
+        plot(real_z, C14_CO)
+        xlabel('depth [m]')
+        ylabel('^{14}CO molecules/g ice')
+        hold on
+    %plot(ice_z, C14_CO)
     end
-    
-    %Avg14CO = mean(C14_CO)
-    
-    % convert back to real depth
-    real_z = interp1(ice_eq_z,z,ice_z);
-    tab = array2table([real_z, transpose(C14_CO)]);
-    tab.Properties.VariableNames(1:2) = {'z', 'co14_co'};
-    writetable(tab, outf);
-
-    %figure
-    plot(real_z, C14_CO)
-    xlabel('depth [m]')
-    ylabel('^{14}CO molecules/g ice')
-    hold on
-%plot(ice_z, C14_CO)
 end
